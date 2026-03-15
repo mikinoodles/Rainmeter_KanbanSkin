@@ -1,6 +1,9 @@
 json = nil
 
 tasks = {}
+taskMeterPool = {
+    count = 0
+}
 renderTasks = {}
 
 COLUMN_X = {
@@ -14,6 +17,7 @@ COLUMN_Y_START = 65
 CARD_HEIGHT = 72
 CARD_GAP = 10
 MAX_CARDS = 30
+MAX_SLOTS = 30
 
 -- State for picking up and dropping tasks
 selectedTask = {
@@ -83,7 +87,7 @@ end
 
 function refreshBoard()
     renderTasks = rebuildRenderTasks(tasks)
-    updateMeters(renderTasks)
+    RenderAllTasks(renderTasks)
 end
 
 function rebuildRenderTasks(renderTasks)
@@ -111,86 +115,97 @@ function rebuildRenderTasks(renderTasks)
     return result
 end
 
-function updateMeters(renderTasks)
-    function showTaskInSlot(i, task)
-        local bgMeter = "TaskBg" .. i
-        local summaryMeter = "TaskSummary" .. i
-        local projectMeter = "TaskProject" .. i
-        local projectBgMeter = "TaskProjectBackground" .. i
+function RenderAllTasks(renderTasks)
 
-        SKIN:Bang("!SetOption", bgMeter, "X", task.x + 40)
-        SKIN:Bang("!SetOption", bgMeter, "Y", task.y)
-        SKIN:Bang("!ShowMeter", bgMeter)
-
-        SKIN:Bang("!SetOption", summaryMeter, "Text", task.summary)
-        SKIN:Bang("!SetOption", summaryMeter, "X", task.x + 50)
-        SKIN:Bang("!SetOption", summaryMeter, "Y", task.y + 10)
-        SKIN:Bang("!SetOption", summaryMeter, "ToolTipText", task.details or "")
-        SKIN:Bang("!ShowMeter", summaryMeter)
-
-        SKIN:Bang("!SetOption", projectBgMeter, "X", task.x + 45)
-        SKIN:Bang("!SetOption", projectBgMeter, "Y", task.y + 32)
-        SKIN:Bang("!ShowMeter", projectBgMeter)
-
-        SKIN:Bang("!SetOption", projectMeter, "Text", task.project)
-        SKIN:Bang("!SetOption", projectMeter, "X", task.x + 50)
-        SKIN:Bang("!SetOption", projectMeter, "Y", task.y + 34)
-        SKIN:Bang("!ShowMeter", projectMeter)
-    end
-
-    function hideTaskInSlot(i)
-        SKIN:Bang("!HideMeter", "TaskBg" .. i)
-        SKIN:Bang("!HideMeter", "TaskSummary" .. i)
-        SKIN:Bang("!HideMeter", "TaskProject" .. i)
-    end
-
-    -- For each card slot
-    for i = 1, MAX_CARDS do
-        -- Assign task to slot
-        local task = renderTasks[i]
-        -- If slot exists
-        if task then
-            -- Show slot
-            showTaskInSlot(i, task)
-        -- If not, then hide slot
-        else
-            hideTaskInSlot(i)
+    function HideUnusedMeters(fromIndex)
+        for i = fromIndex, MAX_SLOTS do
+            SKIN:Bang('!HideMeter', 'TaskBg' .. i)
+            SKIN:Bang('!HideMeter', 'TaskSummary' .. i)
+            SKIN:Bang('!HideMeter', 'TaskProjectBg' .. i)
+            SKIN:Bang('!HideMeter', 'TaskProject' .. i)
         end
     end
 
-    SKIN:Bang("!UpdateMeter", "*")
+    function RenderMeters(renderTasks)
+        for i, task in ipairs(renderTasks) do
+            local bg = "TaskBg" .. i
+            local summary = "TaskSummary" .. i
+            local projectBg = "TaskProjectBg" .. i
+            local project = "TaskProject" .. i
+
+            local leftMouseUpAction = string.format('[!CommandMeasure MeasureScript "OnTaskClick(%d)"]', i)
+
+            SKIN:Bang('!SetOption', bg, 'MeterStyle', "StyleCardBackground")
+            SKIN:Bang('!SetOption', bg, 'X', task.x + 40)
+            SKIN:Bang('!SetOption', bg, 'Y', task.y)
+            SKIN:Bang('!SetOption', bg, "LeftMouseUpAction", leftMouseUpAction)
+            SKIN:Bang('!ShowMeter', bg)
+
+            SKIN:Bang('!SetOption', summary, 'MeterStyle', "StyleCardSummary")
+            SKIN:Bang('!SetOption', summary, 'Text', task.summary)
+            SKIN:Bang('!SetOption', summary, 'X', task.x + 50)
+            SKIN:Bang('!SetOption', summary, 'Y', task.y + 10)
+            SKIN:Bang('!SetOption', summary, "LeftMouseUpAction", leftMouseUpAction)
+            SKIN:Bang('!ShowMeter', summary)
+
+            SKIN:Bang('!SetOption', projectBg, 'MeterStyle', "StyleCardProjectBackground")
+            SKIN:Bang('!SetOption', projectBg, 'Shape', string.format(
+                "Rectangle 0,0,([TaskProject%d:W] + 10),22,6 | Extend ProjectBgModifiers", i
+            ))
+            SKIN:Bang('!SetOption', projectBg, 'X', task.x + 45)
+            SKIN:Bang('!SetOption', projectBg, 'Y', task.y + 32)
+            SKIN:Bang('!SetOption', projectBg, "LeftMouseUpAction", leftMouseUpAction)
+            SKIN:Bang('!ShowMeter', projectBg)
+
+            SKIN:Bang("!SetOption", project, "MeterStyle", "StyleCardProject")
+            SKIN:Bang("!SetOption", project, "Text", task.project)
+            SKIN:Bang("!SetOption", project, "X", task.x + 50)
+            SKIN:Bang("!SetOption", project, "Y", task.y + 34)
+            SKIN:Bang('!SetOption', project, "LeftMouseUpAction", leftMouseUpAction)
+            SKIN:Bang("!ShowMeter", project)
+        end
+    end
+
+    local count = #renderTasks
+
+    RenderMeters(renderTasks)
+
+    HideUnusedMeters(count + 1)
+
+    SKIN:Bang("!UpdateMeterGroup", "Tasks")
     SKIN:Bang("!Redraw")
 end
 
-function PickUpTask(slotIndex)
-    function highlightSelectedSlot(slotIndex)
-        for i = 1, MAX_CARDS do
-            local bgMeter = "TaskBg" .. i
+function OnTaskClick(slotIndex)
+    print("Clicked " .. slotIndex)
 
-            if i == slotIndex then
-                SKIN:Bang("!SetOption", bgMeter, "Shape", "Rectangle 0,0,220,72,8 | Fill Color 55,55,55,235 | StrokeWidth 2 | Stroke Color 120,180,255,255")
-            else
-                SKIN:Bang("!SetOption", bgMeter, "Shape", "Rectangle 0,0,220,72,8 | Fill Color 40,40,40,220 | StrokeWidth 1 | Stroke Color 90,90,90,255")
-            end
+    function removeHighlightFromAll()
+        for i,_ in ipairs(renderTasks) do
+            local unselectedBgMeter = "TaskBg" .. i
+            SKIN:Bang("!SetOption", unselectedBgMeter, "Shape", "Rectangle 0,0,220,72,8 | Fill Color 40,40,40,220 | StrokeWidth 1 | Stroke Color 90,90,90,255")
+            SKIN:Bang("!ShowMeter", unselectedBgMeter)
         end
-
-        SKIN:Bang("!UpdateMeter", "*")
-        SKIN:Bang("!Redraw")
     end
 
-    slotIndex = tonumber(slotIndex)
+    function highlightSelectedSlot(slotIndex)
+        local selectedBgMeter = "TaskBg" .. slotIndex
+        SKIN:Bang("!SetOption", selectedBgMeter, "Shape", "Rectangle 0,0,220,72,8 | Fill Color 55,55,55,235 | StrokeWidth 2 | Stroke Color 120,180,255,255")
+        SKIN:Bang("!ShowMeter", selectedBgMeter)
+    end
+
+    removeHighlightFromAll()
+    highlightSelectedSlot(slotIndex)
 
     local task = renderTasks[slotIndex]
-    if not task then
-        return
-    end
+    if not task then return end
 
     selectedTask.active = true
     selectedTask.taskId = task.id
     selectedTask.slotIndex = slotIndex
     selectedTask.sourceColumn = task.column
-
-    highlightSelectedSlot(slotIndex)
+    
+    SKIN:Bang("!UpdateMeterGroup", "Tasks")
+    SKIN:Bang("!Redraw")
 end
 
 
