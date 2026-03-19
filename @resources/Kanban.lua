@@ -1,9 +1,6 @@
 json = nil
 
 tasks = {}
-taskMeterPool = {
-    count = 0
-}
 renderTasks = {}
 
 COLUMN_X = {
@@ -15,8 +12,8 @@ COLUMN_X = {
 -- Constants for layout
 COLUMN_Y_START = 65
 CARD_HEIGHT = 72
-CARD_GAP = 10
-MAX_CARDS = 30
+PADDING_Y = 8
+CARD_GAP = 6
 MAX_SLOTS = 30
 
 -- State for picking up and dropping tasks
@@ -137,13 +134,24 @@ function RenderAllTasks(renderTasks)
 
             SKIN:Bang('!SetOption', bg, 'MeterStyle', "StyleCardBackground")
             SKIN:Bang('!SetOption', bg, 'X', task.x + 40)
-            SKIN:Bang('!SetOption', bg, 'Y', task.y)
+            if (i == 1 or task.column ~= renderTasks[i - 1].column) then
+                -- print(task.summary)
+                SKIN:Bang('!SetOption', bg, 'Y', COLUMN_Y_START)
+            else
+                local prevBgY = SKIN:GetMeter("TaskBg"..(i-1)):GetY()
+                local prevBgH = SKIN:GetMeter("TaskBg"..(i-1)):GetH()
+                -- print(prevBgY.." "..prevBgH)
+                SKIN:Bang('!SetOption', bg, 'Y', prevBgY + prevBgH + CARD_GAP)
+            end
+            SKIN:Bang('!UpdateMeter', bg)
+
             SKIN:Bang('!SetOption', bg, "LeftMouseUpAction", leftMouseUpAction)
 
             SKIN:Bang('!SetOption', summary, 'MeterStyle', "StyleCardSummary")
             SKIN:Bang('!SetOption', summary, 'Text', task.summary)
             SKIN:Bang('!SetOption', summary, 'X', task.x + 50)
-            SKIN:Bang('!SetOption', summary, 'Y', task.y + 10)
+            local currBgY = SKIN:GetMeter(bg):GetY()
+            SKIN:Bang('!SetOption', summary, 'Y', currBgY + PADDING_Y)
             SKIN:Bang('!SetOption', summary, "LeftMouseUpAction", leftMouseUpAction)
 
             SKIN:Bang('!SetOption', projectBg, 'MeterStyle', "StyleCardProjectBackground")
@@ -151,13 +159,11 @@ function RenderAllTasks(renderTasks)
                 "Rectangle 0,0,([TaskProject%d:W] + 10),22,6 | Extend ProjectBgModifiers", i
             ))
             SKIN:Bang('!SetOption', projectBg, 'X', task.x + 45)
-            -- SKIN:Bang('!SetOption', projectBg, 'Y', "2R")
             SKIN:Bang('!SetOption', projectBg, "LeftMouseUpAction", leftMouseUpAction)
 
             SKIN:Bang("!SetOption", project, "MeterStyle", "StyleCardProject")
             SKIN:Bang("!SetOption", project, "Text", task.project)
             SKIN:Bang("!SetOption", project, "X", task.x + 50)
-            -- SKIN:Bang("!SetOption", project, "Y", string.format("[TaskProjectBg%d:Y]", i))
             SKIN:Bang('!SetOption', project, "LeftMouseUpAction", leftMouseUpAction)
 
             SKIN:Bang('!ShowMeter', bg)
@@ -165,12 +171,15 @@ function RenderAllTasks(renderTasks)
             SKIN:Bang('!ShowMeter', projectBg)
             SKIN:Bang("!ShowMeter", project)
 
+            SKIN:Bang('!UpdateMeter', bg)
             SKIN:Bang('!UpdateMeter', summary)
             SKIN:Bang('!UpdateMeter', projectBg)
 
             local summaryH = SKIN:GetMeter(summary):GetH()
             local projectBgH = SKIN:GetMeter(projectBg):GetH()
-            SKIN:Bang('!SetOption', bg, 'H', summaryH + projectBgH + 10 * 2)
+            SKIN:Bang('!SetOption', bg, 'H', summaryH + projectBgH + (PADDING_Y * 2))
+
+            SKIN:Bang('!UpdateMeter', bg)
         end
     end
 
@@ -278,7 +287,7 @@ function clearNewTask()
 end
 
 function resetAllCardHighlights()
-    for i = 1, MAX_CARDS do
+    for i = 1, MAX_SLOTS do
         local bgMeter = "TaskBg" .. i
         SKIN:Bang("!SetOption", bgMeter, "Shape", string.format("Rectangle 0,0,220,[%s:H],8 | Fill Color 40,40,40,220 | StrokeWidth 1 | Stroke Color 90,90,90,255", bgMeter))
     end
