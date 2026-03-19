@@ -139,30 +139,38 @@ function RenderAllTasks(renderTasks)
             SKIN:Bang('!SetOption', bg, 'X', task.x + 40)
             SKIN:Bang('!SetOption', bg, 'Y', task.y)
             SKIN:Bang('!SetOption', bg, "LeftMouseUpAction", leftMouseUpAction)
-            SKIN:Bang('!ShowMeter', bg)
 
             SKIN:Bang('!SetOption', summary, 'MeterStyle', "StyleCardSummary")
             SKIN:Bang('!SetOption', summary, 'Text', task.summary)
             SKIN:Bang('!SetOption', summary, 'X', task.x + 50)
             SKIN:Bang('!SetOption', summary, 'Y', task.y + 10)
             SKIN:Bang('!SetOption', summary, "LeftMouseUpAction", leftMouseUpAction)
-            SKIN:Bang('!ShowMeter', summary)
 
             SKIN:Bang('!SetOption', projectBg, 'MeterStyle', "StyleCardProjectBackground")
             SKIN:Bang('!SetOption', projectBg, 'Shape', string.format(
                 "Rectangle 0,0,([TaskProject%d:W] + 10),22,6 | Extend ProjectBgModifiers", i
             ))
             SKIN:Bang('!SetOption', projectBg, 'X', task.x + 45)
-            SKIN:Bang('!SetOption', projectBg, 'Y', task.y + 32)
+            -- SKIN:Bang('!SetOption', projectBg, 'Y', "2R")
             SKIN:Bang('!SetOption', projectBg, "LeftMouseUpAction", leftMouseUpAction)
-            SKIN:Bang('!ShowMeter', projectBg)
 
             SKIN:Bang("!SetOption", project, "MeterStyle", "StyleCardProject")
             SKIN:Bang("!SetOption", project, "Text", task.project)
             SKIN:Bang("!SetOption", project, "X", task.x + 50)
-            SKIN:Bang("!SetOption", project, "Y", task.y + 34)
+            -- SKIN:Bang("!SetOption", project, "Y", string.format("[TaskProjectBg%d:Y]", i))
             SKIN:Bang('!SetOption', project, "LeftMouseUpAction", leftMouseUpAction)
+
+            SKIN:Bang('!ShowMeter', bg)
+            SKIN:Bang('!ShowMeter', summary)
+            SKIN:Bang('!ShowMeter', projectBg)
             SKIN:Bang("!ShowMeter", project)
+
+            SKIN:Bang('!UpdateMeter', summary)
+            SKIN:Bang('!UpdateMeter', projectBg)
+
+            local summaryH = SKIN:GetMeter(summary):GetH()
+            local projectBgH = SKIN:GetMeter(projectBg):GetH()
+            SKIN:Bang('!SetOption', bg, 'H', summaryH + projectBgH + 10 * 2)
         end
     end
 
@@ -177,20 +185,18 @@ function RenderAllTasks(renderTasks)
 end
 
 function OnTaskClick(slotIndex)
-    print("Clicked " .. slotIndex)
-
     function removeHighlightFromAll()
         for i,_ in ipairs(renderTasks) do
             local unselectedBgMeter = "TaskBg" .. i
-            SKIN:Bang("!SetOption", unselectedBgMeter, "Shape", "Rectangle 0,0,220,72,8 | Fill Color 40,40,40,220 | StrokeWidth 1 | Stroke Color 90,90,90,255")
-            SKIN:Bang("!ShowMeter", unselectedBgMeter)
+            SKIN:Bang("!SetOption", unselectedBgMeter, "Shape", string.format("Rectangle 0,0,220,[%s:H],8 | Fill Color 40,40,40,220 | StrokeWidth 1 | Stroke Color 90,90,90,255", unselectedBgMeter))
+            SKIN:Bang("!UpdateMeter", unselectedBgMeter)
         end
     end
 
     function highlightSelectedSlot(slotIndex)
         local selectedBgMeter = "TaskBg" .. slotIndex
-        SKIN:Bang("!SetOption", selectedBgMeter, "Shape", "Rectangle 0,0,220,72,8 | Fill Color 55,55,55,235 | StrokeWidth 2 | Stroke Color 120,180,255,255")
-        SKIN:Bang("!ShowMeter", selectedBgMeter)
+        SKIN:Bang("!SetOption", selectedBgMeter, "Shape", string.format("Rectangle 0,0,220,[%s:H],8 | Fill Color 55,55,55,235 | StrokeWidth 2 | Stroke Color 120,180,255,255", selectedBgMeter))
+        SKIN:Bang("!UpdateMeter", selectedBgMeter)
     end
 
     removeHighlightFromAll()
@@ -274,7 +280,7 @@ end
 function resetAllCardHighlights()
     for i = 1, MAX_CARDS do
         local bgMeter = "TaskBg" .. i
-        SKIN:Bang("!SetOption", bgMeter, "Shape", "Rectangle 0,0,220,72,8 | Fill Color 40,40,40,220 | StrokeWidth 1 | Stroke Color 90,90,90,255")
+        SKIN:Bang("!SetOption", bgMeter, "Shape", string.format("Rectangle 0,0,220,[%s:H],8 | Fill Color 40,40,40,220 | StrokeWidth 1 | Stroke Color 90,90,90,255", bgMeter))
     end
 
     SKIN:Bang("!UpdateMeter", "*")
