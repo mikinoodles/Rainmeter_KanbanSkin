@@ -10,7 +10,7 @@ This skin provides a simple three-column workflow:
 
 Tasks can be moved between columns and managed directly from the Rainmeter interface.
 
-![Preview of tool](_README_images/preview_20260315.png)
+![Preview of tool](_README_images/preview_20260324.png)
 
 ---
 
@@ -23,6 +23,7 @@ Tasks can be moved between columns and managed directly from the Rainmeter inter
   - Done
 - **Click to select / highlight tasks**
 - **Move tasks between columns**
+- **Double click task summary or project to edit**
 - **Add new tasks**
 - **Clear all DONE items**
 - Lightweight and responsive
@@ -169,7 +170,6 @@ Rainmeter handles:
 Possible future additions:
 
 - Drag & drop task movement
-- Task editing
 - Persistent task storage
 - Task priorities
 - Due dates
