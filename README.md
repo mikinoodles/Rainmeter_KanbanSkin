@@ -52,7 +52,7 @@ Clone the repository:
 git clone https://github.com/mikinoodles/Rainmeter_KanbanSkin.git
 ```
 
-Or download the ZIP from GitHub.
+Or download the ZIP from [Releases](https://github.com/mikinoodles/Rainmeter_KanbanSkin/releases).
 
 ---
 
