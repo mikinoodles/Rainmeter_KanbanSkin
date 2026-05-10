@@ -27,6 +27,7 @@ Tasks can be moved between columns and managed directly from the Rainmeter inter
 - **Add new tasks**
 - **Clear all DONE items**
 - Lightweight and responsive
+- Scrollable columns
 
 ---
 
@@ -174,7 +175,6 @@ Possible future additions:
 - Task priorities
 - Due dates
 - Project filtering
-- Scrollable columns
 - Multiple boards
 
 ---
